@@ -21,7 +21,7 @@ const props = defineProps<{
   <div :class="cn('flex flex-col gap-6', props.class)">
     <Card>
       <CardHeader>
-        <CardTitle>Sign Up</CardTitle>
+        <CardTitle>Register</CardTitle>
         <CardDescription>
           Enter your information to create an account
         </CardDescription>
@@ -45,12 +45,6 @@ const props = defineProps<{
             <div class="grid gap-3">
               <div class="flex items-center">
                 <Label for="password">Password</Label>
-                <a
-                  href="#"
-                  class="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </a>
               </div>
               <Input id="password" type="password" required />
             </div>
@@ -62,9 +56,9 @@ const props = defineProps<{
           </div>
           <div class="mt-4 text-center text-sm">
             Already have an account?
-            <a href="#" class="underline underline-offset-4">
-              Sign In
-            </a>
+            <router-link to="/auth/login" class="underline underline-offset-4">
+              Login
+            </router-link>
           </div>
         </form>
       </CardContent>

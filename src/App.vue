@@ -15,7 +15,7 @@ import { RouterLink, RouterView } from 'vue-router'
 
   </header>
 
-  <main class="h-dvh pt-14">
+  <main class="h-dvh bg-slate-50">
     <RouterView />
   </main>
 </template>

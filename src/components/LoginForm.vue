@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
+
 </script>
 
 <template>
@@ -41,12 +42,6 @@ const props = defineProps<{
             <div class="grid gap-3">
               <div class="flex items-center">
                 <Label for="password">Password</Label>
-                <a
-                  href="#"
-                  class="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </a>
               </div>
               <Input id="password" type="password" required />
             </div>
@@ -58,9 +53,7 @@ const props = defineProps<{
           </div>
           <div class="mt-4 text-center text-sm">
             Don't have an account?
-            <a href="#" class="underline underline-offset-4">
-              Sign up
-            </a>
+            <router-link class="underline underline-offset-4" to="/auth/register">Register</router-link>
           </div>
         </form>
       </CardContent>
