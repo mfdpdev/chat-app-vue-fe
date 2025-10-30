@@ -19,7 +19,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div :class="cn('flex flex-col gap-6', props.class)">
+  <div :class="cn('flex flex-col gap-6 w-full', props.class)">
     <Card>
       <CardHeader>
         <CardTitle>Login to your account</CardTitle>
