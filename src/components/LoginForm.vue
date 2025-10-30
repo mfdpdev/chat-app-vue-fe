@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
+import { ref } from "vue"
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +19,21 @@ const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
 
+const auth = useAuthStore();
+const router = useRouter();
+
+const email = ref('')
+const password = ref('')
+
+const submit = async () => {
+  await auth.login({
+    email: email.value,
+    password: password.value,
+  });
+
+  router.push("/chats")
+}
+
 </script>
 
 <template>
@@ -28,11 +46,12 @@ const props = defineProps<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form @submit.prevent="submit">
           <div class="flex flex-col gap-6">
             <div class="grid gap-3">
               <Label for="email">Email</Label>
               <Input
+                v-model="email"
                 id="email"
                 type="email"
                 placeholder="m@example.com"
@@ -43,7 +62,7 @@ const props = defineProps<{
               <div class="flex items-center">
                 <Label for="password">Password</Label>
               </div>
-              <Input id="password" type="password" required />
+              <Input v-model="password" id="password" type="password" required />
             </div>
             <div class="flex flex-col gap-3">
               <Button type="submit" class="w-full">
