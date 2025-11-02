@@ -4,6 +4,7 @@ import LoginView from "../views/auth/LoginView.vue"
 import RegisterView from "../views/auth/RegisterView.vue"
 import ChatsView from "../views/chats/ChatsView.vue"
 import { useAuthStore } from '@/stores/auth'
+import { metadata } from '@vueuse/core/metadata.mjs'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,6 +13,9 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: {
+        requiresAuth: true
+      }
     },
     {
       path: "/auth/register",
@@ -45,51 +49,40 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore();
 
-  // Kalau route butuh auth
-  if (to.meta.requiresAuth) {
-    if (auth.isAuthenticated) {
-      // Cek apakah ada access token
-      if (!auth.accessToken) {
-        // Coba refresh token dulu
-        try {
-          await auth.refreshToken();
-          // Kalau berhasil, lanjutkan
-          next();
-        } catch (err) {
-          // Gagal refresh → redirect ke halaman login
-          next("/auth/login");
-        }
-      } else {
-        // Ada token → cek apakah masih valid (opsional: cek /me)
-        try {
-          // Opsional: cek user info, jika perlu validasi lebih lanjut
-          // if (!auth._id) {
-          //   const res = await api.get('/auth/me');
-          //   auth.user = res.data;
-          // }
-          next();
-        } catch (err) {
-          // Token invalid → coba refresh
-          try {
-            await auth.refreshToken();
-            next();
-          } catch (err) {
-            next("/auth/login");
-          }
-        }
-      }
-    } else {
-      // Jika tidak ada token dan belum autentikasi, redirect ke login
-      next("/auth/login");
-    }
-  } else {
-    // Jika page login/register dan user sudah login, redirect ke dashboard
-    if ((to.name === 'login' || to.name === "register") && auth.accessToken) {
-      next("/chats");
-    } else {
+  const isTokenValid = (value: boolean) => {
+    return value;
+  }
+
+  if(!auth.init && !auth.isAuthenticated && !auth.accessToken && !isTokenValid(false)){
+    await auth.refreshToken();
+  } 
+
+  if(to.meta.requiresAuth){
+    if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
       next();
     }
+
+    return next({
+      name: "login"
+    });
   }
+
+  if(to.name == "login" || to.name == "register") {
+    if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
+      return next("/chats");
+    }
+  }
+
+  if(to.meta.requiresAuth){
+    if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
+      return next();
+    }
+
+    return next("/auth/login");
+  }
+
+
+  return next();
 });
 
 export default router
