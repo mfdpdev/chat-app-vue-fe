@@ -3,8 +3,8 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from "../views/auth/LoginView.vue"
 import RegisterView from "../views/auth/RegisterView.vue"
 import ChatsView from "../views/chats/ChatsView.vue"
+import PageView from "../views/chats/PageView.vue"
 import { useAuthStore } from '@/stores/auth'
-import { metadata } from '@vueuse/core/metadata.mjs'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +31,13 @@ const router = createRouter({
       path: "/chats",
       name: "chats",
       component: ChatsView,
+      meta: {
+        requiresAuth: true,
+      }
+    },
+    {
+      path: "/chats/:id",
+      component: PageView,
       meta: {
         requiresAuth: true,
       }
