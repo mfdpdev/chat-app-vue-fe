@@ -19,19 +19,22 @@ api.interceptors.request.use((config) => {
 
 // Auto-refresh on 401
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  (response) => response, //eksekusi ketika success
+  async (error) => { //eksekusi ketika error
     const authStore = useAuthStore();
     const originalRequest = error.config;
 
-    if ((error.response?.status === 403) && !originalRequest._retry) {
+    if ((error.response?.status === 403 && !authStore.refresh) && !originalRequest._retry) {
       originalRequest._retry = true;
+      authStore.refresh = true;
 
       const refreshed = await authStore.refreshToken();
       if (refreshed) {
         return api(originalRequest);
       }
     }
+
+    authStore.refresh = false;
     return Promise.reject(error);
   }
 );
