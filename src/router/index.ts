@@ -4,6 +4,7 @@ import LoginView from "../views/auth/LoginView.vue"
 import RegisterView from "../views/auth/RegisterView.vue"
 import ChatsView from "../views/chats/ChatsView.vue"
 import PageView from "../views/chats/PageView.vue"
+import ProfileView from "../views/profile/ProfileView.vue"
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -38,6 +39,13 @@ const router = createRouter({
     {
       path: "/chats/:id",
       component: PageView,
+      meta: {
+        requiresAuth: true,
+      }
+    },
+    {
+      path: "/users/profile",
+      component: ProfileView,
       meta: {
         requiresAuth: true,
       }

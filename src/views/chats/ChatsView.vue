@@ -61,6 +61,10 @@ const openChat = (id: number) => {
   router.push(`/chats/${id}`)
 }
 
+const handleProfile = () => {
+  router.push("/users/profile")
+}
+
 const handleLogout = async () => {
   await authStore.logout();
   router.push('/auth/login');
@@ -88,7 +92,7 @@ const handleLogout = async () => {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-                @click="() => console.log('hello')"
+                @click="handleProfile"
             >
               Profile
             </DropdownMenuItem>

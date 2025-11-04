@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Card,
   CardContent,
@@ -24,11 +25,13 @@ const router = useRouter();
 
 const email = ref('')
 const password = ref('')
+const isChecked = ref(false)
 
 const submit = async () => {
   await auth.login({
     email: email.value,
     password: password.value,
+    rememberMe: isChecked.value
   });
 
   router.push("/chats")
@@ -63,6 +66,18 @@ const submit = async () => {
                 <Label for="password">Password</Label>
               </div>
               <Input v-model="password" id="password" type="password" required />
+            </div>
+            <div class="flex items-center space-x-2">
+              <Checkbox
+                  id="remember-me"
+                  v-model="isChecked"
+              />
+              <Label
+                for="remember-me"
+                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+              Remember Me
+              </Label>
             </div>
             <div class="flex flex-col gap-3">
               <Button type="submit" class="w-full">
