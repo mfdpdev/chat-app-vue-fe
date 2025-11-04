@@ -11,6 +11,33 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ref } from "vue"
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
+
+const auth = useAuthStore();
+const router = useRouter();
+
+const name = ref("")
+const email = ref("")
+const password = ref("")
+
+const submit = async () => {
+  const result = await auth.register({
+    name: name.value,
+    email: email.value,
+    password: password.value,
+  });
+
+  if(result){
+    router.push("/auth/login");
+  }
+
+  name.value = ""
+  email.value = ""
+  password.value = ""
+
+}
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
@@ -27,17 +54,18 @@ const props = defineProps<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form @submit.prevent="submit">
           <div class="flex flex-col gap-6">
             <div class="grid gap-2">
               <Label for="first-name">Name</Label>
-              <Input id="Name" placeholder="John Doe" required />
+              <Input id="Name" v-model="name" placeholder="John Doe" required />
             </div>
             <div class="grid gap-3">
               <Label for="email">Email</Label>
               <Input
                 id="email"
                 type="email"
+                v-model="email"
                 placeholder="m@example.com"
                 required
               />
@@ -46,7 +74,7 @@ const props = defineProps<{
               <div class="flex items-center">
                 <Label for="password">Password</Label>
               </div>
-              <Input id="password" type="password" required />
+              <Input id="password" v-model="password" type="password" required />
             </div>
             <div class="flex flex-col gap-3">
               <Button type="submit" class="w-full">

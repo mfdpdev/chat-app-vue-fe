@@ -74,7 +74,7 @@ router.beforeEach(async (to, from, next) => {
 
   if(to.meta.requiresAuth){
     if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
-      next();
+      return next();
     }
 
     return next({

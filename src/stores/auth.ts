@@ -19,6 +19,15 @@ export const useAuthStore = defineStore("auth", {
       // api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     },
 
+    async register(credentials: any): Promise<boolean> {
+      try {
+        const _ = await api.post('/auth/signup', credentials);
+        return true
+      } catch (err){
+        return false
+      }
+    },
+
     async login(credentials: any): Promise<void> {
       try {
         const { data } = await api.post('/auth/signin', credentials);
