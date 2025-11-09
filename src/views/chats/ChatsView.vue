@@ -75,7 +75,10 @@ const handleLogout = async () => {
 };
 
 const fetchUsers = async () => {
-  const res = await api.get("/users") 
+  const res = await api.get("/users", {}, {
+    withCredentials: true,
+  });
+
   const fetchedUsers = res.data.data.users?.filter( user => user._id !== authStore.me._id);
 
   users.value = fetchedUsers.map( user => ({

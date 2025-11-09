@@ -26,11 +26,12 @@ const route = useRoute()
 // Input pesan
 const input = ref('')
 const scrollArea = ref(null)
+const userId = ref<any>("")
 const recipientId = ref<string>("")
 
-//const typingTimeout = ref(null)
-let typingTimeout = null;
+const typingTimeout = ref(null)
 const isTyping = ref(false)
+const showTyping = ref(false)
 
 const socketStore = useSocketStore();
 
@@ -83,16 +84,16 @@ onMounted(() => {
   });
   nextTick(() => scrollToBottom())
 
-  socketStore.socket.on('typing', (result) => {
-    if (result.from === recipientId.value) {
-      isTyping.value = result.isTyping;
+  socketStore.socket.on('typing', ({ from, isTyping }) => {
+    if (from === recipientId.value) {
+      showTyping.value = isTyping
     }
   })
 
 })
 
 onBeforeUnmount(() => {
-  if (typingTimeout) clearTimeout(typingTimeout)
+  if (typingTimeout.value) clearTimeout(typingTimeout.value)
   // Kirim false saat keluar
   socketStore.sendTyping(recipientId.value, false)
 })
@@ -100,30 +101,23 @@ onBeforeUnmount(() => {
 const handleInput = () => {
   if (!recipientId.value) return
 
+  // Jika input kosong → stop
   if (!input.value.trim()) {
-    if (typingTimeout) {
-      clearTimeout(typingTimeout)
-      typingTimeout = null
+    if (typingTimeout.value) {
+      clearTimeout(typingTimeout.value)
+      typingTimeout.value = null
     }
-
-    socketStore.sendTyping(recipientId.value, false);
-    return;
+    socketStore.sendTyping(recipientId.value, false)
+    return
   }
   
-  if(!isTyping.value) {
-    socketStore.sendTyping(recipientId.value, true)
-  }
+  socketStore.sendTyping(recipientId.value, true)
 
-  if (clearTimeout) {
-    clearTimeout(typingTimeout);
-    typingTimeout = null
-  }
+  if (clearTimeout.value) clearTimeout(typingTimeout.value);
 
-  typingTimeout = setTimeout(() => {
-    if(recipientId.value) {
-      socketStore.sendTyping(recipientId.value, false)
-    }
-  }, 1500)
+  typingTimeout.value = setTimeout(() => {
+    socketStore.sendTyping(recipientId.value, false)
+  }, 2500)
 }
 
 </script>
@@ -143,7 +137,7 @@ const handleInput = () => {
       </Avatar>
       <div>
         <p class="font-semibold text-sm">{{ data.name }}</p>
-        <p class="text-xs text-gray-500">{{ isTyping ? "typing ..." : isOnline ? "Online" : "Offline" }}</p>
+        <p class="text-xs text-gray-500">{{ showTyping ? "typing ..." : isOnline ? "Online" : "Offline" }}</p>
       </div>
     </header>
 
