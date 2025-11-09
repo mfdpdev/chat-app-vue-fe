@@ -111,7 +111,7 @@ onMounted(() => {
             <div class="group">
               <div class="relative cursor-pointer">
                 <Avatar class="h-14 w-14 ring-2 ring-transparent group-hover:ring-blue-500 transition-all">
-                  <AvatarImage src="" />
+                  <!-- <AvatarImage src="" /> -->
                   <AvatarFallback>Test</AvatarFallback>
                 </Avatar>
               </div>
@@ -157,7 +157,7 @@ onMounted(() => {
           >
             <div class="relative">
               <Avatar class="h-14 w-14 ring-2 ring-transparent group-hover:ring-blue-500 transition-all">
-                <AvatarImage :src="user.avatar" />
+                <!-- <AvatarImage :src="user.avatar" /> -->
                 <AvatarFallback>{{ user.name[0] }}</AvatarFallback>
               </Avatar>
               <!-- Online Indicator -->
@@ -189,7 +189,7 @@ onMounted(() => {
           <!-- Avatar dari users -->
           <div class="relative">
             <Avatar>
-              <AvatarImage :src="users.find(u => u.id === chat.id)?.avatar" />
+              <!-- <AvatarImage :src="users.find(u => u.id === chat.id)?.avatar" /> -->
               <AvatarFallback>{{ users.find(u => u.id === chat.id)?.name[0] }}</AvatarFallback>
             </Avatar>
             <div

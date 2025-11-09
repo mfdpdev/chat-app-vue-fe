@@ -68,10 +68,11 @@ const scrollToBottom = () => {
 }
 
 const isOnline = computed(() => {
-  return recipientId.value && socketStore.onlineUsers.has(recipientId.value);
+  return recipientId.value && socketStore.onlineUsers.includes(recipientId.value);
 })
 
 watch(() => socketStore.onlineUsers, (newList) => {
+  console.log(newList)
   console.log('Online users:', Array.from(newList || []))
 }, { deep: true })
 

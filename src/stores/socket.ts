@@ -25,7 +25,7 @@ export const useSocketStore = defineStore("store", () => {
 
       socket.value.on('online-users', (users) => {
         // onlineUsers.value = new Set(users);
-        onlineUsers.value = [];
+        onlineUsers.value = users;
       });
 
       socket.value.on('receive-message', (msg) => {
