@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { ref, watch, nextTick, onMounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import { ChevronLeft, Send } from "lucide-vue-next"
+import { useSocketStore } from '@/stores/socket';
+import { useRoute } from "vue-router"
+
 
 // Data chat
 const data = ref({
@@ -18,25 +21,30 @@ const data = ref({
   ],
 })
 
+const route = useRoute()
+
 // Input pesan
 const input = ref('')
 const scrollArea = ref(null)
+const userId = ref<any>("")
+const recipientId = ref<string>("")
+
+const typingTimeout = ref(null)
+const isTyping = ref(false)
+const showTyping = ref(false)
+
+const socketStore = useSocketStore();
 
 // Fungsi kirim pesan
 const sendMessage = () => {
   if (!input.value.trim()) return
 
-  const now = new Date().toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-
   data.value.messages.push({
     text: input.value,
-    time: now,
     sender: 'me',
   })
 
+  socketStore.send(input.value);
   input.value = ''
 }
 
@@ -59,10 +67,59 @@ const scrollToBottom = () => {
   }
 }
 
+const isOnline = computed(() => {
+  return recipientId.value && socketStore.onlineUsers.has(recipientId.value);
+})
+
+watch(() => socketStore.onlineUsers, (newList) => {
+  console.log('Online users:', Array.from(newList || []))
+}, { deep: true })
+
 // Scroll saat pertama kali load
 onMounted(() => {
+  recipientId.value = route.params.userId;
+  socketStore.socket.on('receive-message', (msg) => {
+    console.log('Pesan diterima:', msg);
+    //socketStore.messages.push(msg); // otomatis update UI
+  });
   nextTick(() => scrollToBottom())
+
+  socketStore.socket.on('typing', ({ from, isTyping }) => {
+    if (from === recipientId.value) {
+      showTyping.value = isTyping
+    }
+  })
+
 })
+
+onBeforeUnmount(() => {
+  if (typingTimeout.value) clearTimeout(typingTimeout.value)
+  // Kirim false saat keluar
+  socketStore.sendTyping(recipientId.value, false)
+})
+
+const handleInput = () => {
+  if (!recipientId.value) return
+
+  // Jika input kosong → stop
+  if (!input.value.trim()) {
+    if (typingTimeout.value) {
+      clearTimeout(typingTimeout.value)
+      typingTimeout.value = null
+    }
+    socketStore.sendTyping(recipientId.value, false)
+    return
+  }
+  
+  socketStore.sendTyping(recipientId.value, true)
+
+  if (clearTimeout.value) clearTimeout(typingTimeout.value);
+
+  typingTimeout.value = setTimeout(() => {
+    socketStore.sendTyping(recipientId.value, false)
+  }, 2500)
+}
+
 </script>
 
 <template>
@@ -80,7 +137,7 @@ onMounted(() => {
       </Avatar>
       <div>
         <p class="font-semibold text-sm">{{ data.name }}</p>
-        <p class="text-xs text-gray-500">Online</p>
+        <p class="text-xs text-gray-500">{{ showTyping ? "typing ..." : isOnline ? "Online" : "Offline" }}</p>
       </div>
     </header>
 
@@ -121,6 +178,7 @@ onMounted(() => {
       <Input
         v-model="input"
         placeholder="Ketik pesan..."
+        @input="handleInput"
         @keydown.enter="sendMessage"
         class="flex-1"
       />

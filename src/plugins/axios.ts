@@ -17,6 +17,21 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error)
   });
 
+let isRefreshing = false;
+let queue: [] = [];
+
+const processQueue = (error, token = null) => {
+  queue.forEach((prom: any) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  queue = [];
+};
+
 // Auto-refresh on 401
 api.interceptors.response.use(
   (response) => response, //eksekusi ketika success
@@ -24,17 +39,58 @@ api.interceptors.response.use(
     const authStore = useAuthStore();
     const originalRequest = error.config;
 
-    if ((error.response?.status === 403 && !authStore.refresh) && !originalRequest._retry) {
-      originalRequest._retry = true;
-      authStore.refresh = true;
+    //TAMBAHKAN PENGECEKAN URL
+    // const isSignoutRequest = originalRequest.url.includes('/auth/signout');
+    const isRefreshRequest = originalRequest.url.includes('/auth/refresh');
+    //
+    // // JANGAN retry refresh token jika refresh sendiri gagal
+    if (isRefreshRequest && error.response?.status === 401) {
+      // Langsung reject, jangan retry
+      return Promise.reject(error);
+    }
+    //
+    // // JANGAN refresh token saat logout
+    // if (isSignoutRequest && error.response?.status === 401) {
+    //   console.log("jalan")
+    //   return Promise.reject(error); // Biarkan masuk catch di logout()
+    // }
 
-      const refreshed = await authStore.refreshToken();
-      if (refreshed) {
+    if(error.response?.status === 401 && !originalRequest._retry){
+      if(isRefreshing){
+        return new Promise((resolve, reject) => {
+          queue.push({
+            resolve,
+            reject,
+          });
+        }).then(() => {
+            if (authStore.accessToken) {
+              originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`;
+            }
+            return api(originalRequest);
+          }).catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await authStore.refreshToken();
+        processQueue(null, authStore.accessToken)
+        if (authStore.accessToken) {
+          originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`;
+        }
         return api(originalRequest);
+      } catch (e) {
+        processQueue(e, authStore.accessToken)
+        authStore.forceLogout();
+
+        return Promise.reject(e)
+        // throw e;
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    authStore.refresh = false;
     return Promise.reject(error);
   }
 );

@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import { onMounted } from "vue"
+import { useAuthStore } from '@/stores/auth'
+import { useSocketStore } from "@/stores/socket"
+
+
 </script>
 
 <template>

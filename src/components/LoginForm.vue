@@ -20,7 +20,7 @@ const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
 
-const auth = useAuthStore();
+const authStore = useAuthStore();
 const router = useRouter();
 
 const email = ref('')
@@ -28,13 +28,15 @@ const password = ref('')
 const isChecked = ref(false)
 
 const submit = async () => {
-  await auth.login({
+  const result = await authStore.login({
     email: email.value,
     password: password.value,
     rememberMe: isChecked.value
   });
 
-  router.push("/chats")
+  if(result){
+    router.push("/chats")
+  }
 }
 
 </script>

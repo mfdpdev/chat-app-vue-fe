@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import api from "@/plugins/axios"
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -6,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { useAuthStore } from '@/stores/auth';
+import { useSocketStore } from '@/stores/socket';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -17,23 +19,24 @@ import {
 import type { DropdownMenuCheckboxItemProps } from "reka-ui"
 
 import { Search, MoreHorizontal } from 'lucide-vue-next'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
+const socketStore = useSocketStore();
 const router = useRouter();
 
 // === DATA USER ===
 const users = ref([
-  { id: 1, name: 'Alice', avatar: '/avatars/alice.jpg', online: true },
-  { id: 2, name: 'Bob', avatar: '/avatars/bob.jpg', online: false },
-  { id: 3, name: 'Charlie', avatar: '/avatars/charlie.jpg', online: true },
-  { id: 4, name: 'Diana', avatar: '/avatars/diana.jpg', online: false },
-  { id: 5, name: 'Eve', avatar: '/avatars/eve.jpg', online: true },
-  { id: 6, name: 'Frank', avatar: '/avatars/frank.jpg', online: true },
-  { id: 7, name: 'Grace', avatar: '/avatars/grace.jpg', online: false },
-  { id: 8, name: 'Nur', avatar: '/avatars/nur.jpg', online: false },
+  //{ id: 1, name: 'Alice', avatar: '/avatars/alice.jpg', online: true },
+  //{ id: 2, name: 'Bob', avatar: '/avatars/bob.jpg', online: false },
+  //{ id: 3, name: 'Charlie', avatar: '/avatars/charlie.jpg', online: true },
+  //{ id: 4, name: 'Diana', avatar: '/avatars/diana.jpg', online: false },
+  //{ id: 5, name: 'Eve', avatar: '/avatars/eve.jpg', online: true },
+  //{ id: 6, name: 'Frank', avatar: '/avatars/frank.jpg', online: true },
+  //{ id: 7, name: 'Grace', avatar: '/avatars/grace.jpg', online: false },
+  //{ id: 8, name: 'Nur', avatar: '/avatars/nur.jpg', online: false },
 ])
 
 // === DATA LAST CHAT ===
@@ -57,8 +60,8 @@ const filteredUsers = computed(() => {
 })
 
 // Ke halaman chat
-const openChat = (id: number) => {
-  router.push(`/chats/${id}`)
+const openChat = (_id: string) => {
+  router.push(`/chats/${_id}`)
 }
 
 const handleProfile = () => {
@@ -66,9 +69,35 @@ const handleProfile = () => {
 }
 
 const handleLogout = async () => {
-  await authStore.logout();
-  router.push('/auth/login');
+  try {
+    await authStore.logout();
+  } catch (err) {}
 };
+
+const fetchUsers = async () => {
+  const res = await api.get("/users") 
+  const fetchedUsers = res.data.data.users?.filter( user => user._id !== authStore.me._id);
+
+  users.value = fetchedUsers.map( user => ({
+    ...user,
+    online: socketStore.onlineUsers.includes(user._id),
+  }));
+}
+
+watch(() => socketStore.onlineUsers, (onlineUsers) => {
+
+  const onlineList = Array.isArray(onlineUsers) ? onlineUsers : []
+
+  users.value = users.value.map( user => ({
+    ...user,
+    online: onlineList.includes(user._id)
+  }));
+})
+
+onMounted(() => {
+  fetchUsers();
+})
+
 </script>
 
 <template>
@@ -123,7 +152,7 @@ const handleLogout = async () => {
           <div
             v-for="user in filteredUsers"
             :key="user.id"
-            @click="openChat(user.id)"
+            @click="openChat(user._id)"
             class="flex flex-col items-center gap-1 cursor-pointer group min-w-fit"
           >
             <div class="relative">

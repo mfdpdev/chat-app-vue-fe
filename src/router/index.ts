@@ -4,8 +4,9 @@ import LoginView from "../views/auth/LoginView.vue"
 import RegisterView from "../views/auth/RegisterView.vue"
 import ChatsView from "../views/chats/ChatsView.vue"
 import PageView from "../views/chats/PageView.vue"
-import ProfileView from "../views/profile/ProfileView.vue"
+import ProfileView from "@/views/profile/ProfileView.vue"
 import { useAuthStore } from '@/stores/auth'
+import { useSocketStore } from '@/stores/socket'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,7 +38,7 @@ const router = createRouter({
       }
     },
     {
-      path: "/chats/:id",
+      path: "/chats/:userId",
       component: PageView,
       meta: {
         requiresAuth: true,
@@ -61,35 +62,46 @@ const router = createRouter({
   ],
 })
 
+let isInitialized = false;
+async function initialize(authStore, socketStore) {
+  if (isInitialized) return;
+
+  try {
+    if(!authStore.accessToken) await authStore.refreshToken();
+
+    if (authStore.accessToken) {
+      await authStore.getMe();
+
+      // 3. Jika user berhasil dimuat, koneksikan socket
+      if (authStore.me?._id) {
+        socketStore.connect(authStore.me._id, authStore.accessToken);
+      }
+    }
+  } catch (err) {
+    // throw err;
+  } finally {
+    isInitialized = true;
+  }
+}
+
 router.beforeEach(async (to, from, next) => {
-  const auth = useAuthStore();
+  const authStore = useAuthStore();
+  const socketStore = useSocketStore();
 
   const isTokenValid = (value: boolean) => {
     return value;
   }
 
-  if(!auth.init && !auth.isAuthenticated && !auth.accessToken && !isTokenValid(false)){
-    await auth.refreshToken();
-  } 
-
-  if(to.meta.requiresAuth){
-    if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
-      return next();
-    }
-
-    return next({
-      name: "login"
-    });
-  }
+  await initialize(authStore, socketStore);
 
   if(to.name == "login" || to.name == "register") {
-    if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
+    if(authStore.accessToken && isTokenValid(true)){
       return next("/chats");
     }
   }
 
   if(to.meta.requiresAuth){
-    if(auth.accessToken && auth.isAuthenticated && isTokenValid(true)){
+    if(authStore.accessToken && isTokenValid(true)){
       return next();
     }
 
