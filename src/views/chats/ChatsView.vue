@@ -75,16 +75,17 @@ const handleLogout = async () => {
 };
 
 const fetchUsers = async () => {
-  const res = await api.get("/users", {}, {
-    withCredentials: true,
-  });
+  try {
+    const res = await api.get("/users", { withCredentials: true });
 
-  const fetchedUsers = res.data.data.users?.filter( user => user._id !== authStore.me._id);
+    const rawUsers = res.data?.data?.users || [];
+    const filtered = rawUsers.filter(u => u._id !== authStore.me._id);
 
-  users.value = fetchedUsers.map( user => ({
-    ...user,
-    online: socketStore.onlineUsers.includes(user._id),
-  }));
+    users.value = filtered.map(user => ({
+      ...user,
+      online: socketStore.onlineUsers.includes(user._id),
+    }));
+  } catch (err) { }
 }
 
 watch(() => socketStore.onlineUsers, (onlineUsers) => {

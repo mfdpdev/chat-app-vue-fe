@@ -75,10 +75,11 @@ api.interceptors.response.use(
 
       try {
         await authStore.refreshToken();
-        processQueue(null, authStore.accessToken)
         if (authStore.accessToken) {
           originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`;
         }
+
+        processQueue(null, authStore.accessToken)
         return api(originalRequest);
       } catch (e) {
         processQueue(e, authStore.accessToken)

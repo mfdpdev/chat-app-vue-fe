@@ -25,7 +25,9 @@ export const useAuthStore = defineStore("auth", {
     setTokenAndUser(token: string, me: any = null): void {
       this.accessToken = token;
       this.isAuthenticated = true;
-      this.me = me;
+      if(!this.me){
+        this.me = me;
+      }
 
       // api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     },
@@ -85,7 +87,7 @@ export const useAuthStore = defineStore("auth", {
         
         if (accessToken) {
           this.setTokenAndUser(accessToken);
-          return true
+          return true;
         }
 
         throw new Error("Error")
