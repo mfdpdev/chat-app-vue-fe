@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import { ChevronLeft, Send } from "lucide-vue-next"
 import { useSocketStore } from '@/stores/socket';
+import { useAuthStore } from '@/stores/auth';
 import { useRoute } from "vue-router"
 
 
@@ -22,43 +23,49 @@ const data = ref({
 })
 
 const route = useRoute()
+const socketStore = useSocketStore();
+const authStore = useAuthStore();
 
 // Input pesan
 const input = ref('')
 const scrollArea = ref(null)
-const recipientId = ref<string>("")
+//const recipientId = ref<string>("")
+const recipientId = computed(() => route.params.userId as string)
+
+const messages = computed(() => {
+  return socketStore.getMessages(recipientId.value);
+})
 
 //const typingTimeout = ref(null)
 let typingTimeout = null;
 const isTyping = ref(false)
 
-const socketStore = useSocketStore();
 
 // Fungsi kirim pesan
 const sendMessage = () => {
-  if (!input.value.trim()) return
+  if (!input.value.trim() || !recipientId.value) return;
 
-  data.value.messages.push({
-    text: input.value,
-    sender: 'me',
-  })
+  socketStore.send({
+    recipientId: recipientId.value,
+    message: input.value.trim(),
+  });
 
-  socketStore.send(input.value);
   input.value = ''
+  handleInput();
 }
 
 // Scroll ke bawah setiap kali messages berubah
 watch(
-  () => data.value.messages,
-  async () => {
-    await nextTick()
+  () => messages,
+  () => {
     scrollToBottom()
   },
   { deep: true }
 )
 
 // Fungsi scroll manual
-const scrollToBottom = () => {
+const scrollToBottom = async () => {
+  await nextTick()
   if (!scrollArea.value) return
   const viewport = scrollArea.value.$el.querySelector('[data-reka-scroll-area-viewport]')
   if (viewport) {
@@ -70,18 +77,16 @@ const isOnline = computed(() => {
   return recipientId.value && socketStore.onlineUsers.includes(recipientId.value);
 })
 
-watch(() => socketStore.onlineUsers, (newList) => {
-  //console.log('Online users:', Array.from(newList || []))
-}, { deep: true })
-
 // Scroll saat pertama kali load
 onMounted(() => {
-  recipientId.value = route.params.userId;
-  socketStore.socket.on('receive-message', (msg) => {
-    console.log('Pesan diterima:', msg);
-    //socketStore.messages.push(msg); // otomatis update UI
-  });
-  nextTick(() => scrollToBottom())
+  if (recipientId.value) {
+    socketStore.fetchHistory(recipientId.value);
+  }
+
+  //socketStore.socket.on('receive-message', (msg) => {
+  //  console.log('Pesan diterima:', msg);
+  //  //socketStore.messages.push(msg); // otomatis update UI
+  //});
 
   socketStore.socket.on('typing', (result) => {
     if (result.from === recipientId.value) {
@@ -89,6 +94,7 @@ onMounted(() => {
     }
   })
 
+  nextTick(() => scrollToBottom())
 })
 
 onBeforeUnmount(() => {
@@ -151,26 +157,26 @@ const handleInput = () => {
     <ScrollArea ref="scrollArea" class="flex-1 p-4 h-0">
       <div class="space-y-4">
         <div
-          v-for="(msg, index) in data.messages"
-          :key="index"
-          :class="['flex', msg.sender === 'me' ? 'justify-end' : 'justify-start']"
+          v-for="msg in messages"
+          :key="msg._id"
+          :class="['flex', msg.from === authStore.me?._id ? 'justify-end' : 'justify-start']"
         >
           <div
             :class="[
               'max-w-xs px-4 py-2 rounded-2xl text-sm',
-              msg.sender === 'me'
+              msg.from === authStore.me?._id
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-200 text-gray-900',
             ]"
           >
-            <p>{{ msg.text }}</p>
+            <p>{{ msg.message }}</p>
             <p
               :class="[
                 'text-xs mt-1',
-                msg.sender === 'me' ? 'text-blue-200' : 'text-gray-500',
+                msg.from === authStore.me?._id ? 'text-blue-200' : 'text-gray-500',
               ]"
             >
-              {{ msg.time }}
+              {{ new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
             </p>
           </div>
         </div>
