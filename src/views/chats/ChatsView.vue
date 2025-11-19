@@ -155,14 +155,14 @@ onMounted(() => {
       <ScrollArea class="whitespace-nowrap">
         <div class="flex gap-4 p-4">
           <div
-            v-for="user in filteredUsers"
+            v-for="user in users"
             :key="user.id"
             @click="openChat(user._id)"
             class="flex flex-col items-center gap-1 cursor-pointer group min-w-fit"
           >
             <div class="relative">
               <Avatar class="h-14 w-14 ring-2 ring-transparent group-hover:ring-blue-500 transition-all">
-                <!-- <AvatarImage :src="user.avatar" /> -->
+                <AvatarImage :src="user.profileImageUrl || 'http://localhost:8000/images/default-profile.jpeg'" alt="John Doe" />
                 <AvatarFallback>{{ user.name[0] }}</AvatarFallback>
               </Avatar>
               <!-- Online Indicator -->
