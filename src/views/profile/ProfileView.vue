@@ -19,10 +19,10 @@
             <!-- Foto Profile + Nama -->
             <div class="flex flex-col items-center">
               <Avatar class="h-32 w-32 ring-4 ring-secondary ring-offset-4 ring-offset-background">
-                <AvatarImage :src="previewUrl || userStore.authStore.me.profileImageUrl || 'http://localhost:8000/images/default-profile.jpeg'" alt="John Doe" />
+                <AvatarImage :src="previewUrl || authStore.me.profileImageUrl || 'http://localhost:8000/images/default-profile.jpeg'" alt="John Doe" />
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
-              <h2 class="mt-4 text-2xl font-semibold">{{ userStore.authStore.me?.name }}</h2>
+              <h2 class="mt-4 text-2xl font-semibold">{{ authStore.me?.name }}</h2>
             </div>
 
             <!-- Form Fields -->
@@ -64,7 +64,6 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft } from 'lucide-vue-next'
 
 // Semua komponen shadcn-vue
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -72,8 +71,9 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ChevronLeft } from "lucide-vue-next"
+import { ChevronLeft, ArrowLeft } from "lucide-vue-next"
 import { useUserStore } from "@/stores/user"
+import { useAuthStore } from "@/stores/auth"
 import { ref, reactive } from "vue"
 
 // Fungsi kembali (bisa diganti dengan router kalau pakai Vue Router)
@@ -84,10 +84,11 @@ const goBack = () => {
   // atau router.push('/home')
 }
 
+const authStore = useAuthStore();
 const userStore = useUserStore();
 
 const form = reactive({
-  name: userStore.authStore.me.name ?? "",
+  name: authStore.me?.name ?? "",
   password: "",
   password_confirmation: "",
 })
@@ -128,7 +129,7 @@ const handle = async () => {
   
   const payload = new FormData();
 
-  if(form.name && form.name !== userStore.authStore.me?.name) payload.append("name", form.name);
+  if(form.name && form.name !== authStore.me?.name) payload.append("name", form.name);
   if(form.password && form.password !== "") payload.append("password", form.password);
 
   if (selectedFile.value) {

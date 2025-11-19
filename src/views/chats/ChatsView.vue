@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { useAuthStore } from '@/stores/auth';
 import { useSocketStore } from '@/stores/socket';
+import { useConversationStore } from '@/stores/conversation';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -19,12 +20,13 @@ import {
 import type { DropdownMenuCheckboxItemProps } from "reka-ui"
 
 import { Search, MoreHorizontal } from 'lucide-vue-next'
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
 const socketStore = useSocketStore();
+const conversationStore = useConversationStore();
 const router = useRouter();
 
 // === DATA USER ===
@@ -40,15 +42,15 @@ const users = ref([
 ])
 
 // === DATA LAST CHAT ===
-const chats = ref([
-  { id: 1, lastMessage: 'Oke, jam 3 ya?', time: '14:30', unread: 2 },
-  { id: 2, lastMessage: 'Haha iya betul!', time: '13:15', unread: 0 },
-  { id: 3, lastMessage: 'File sudah dikirim', time: '12:45', unread: 5 },
-  { id: 4, lastMessage: 'Bisa bantu revisi?', time: '11:20', unread: 1 },
-  { id: 5, lastMessage: 'Oke, nanti aku kabari', time: '10:05', unread: 0 },
-  { id: 6, lastMessage: 'Meeting jam 4?', time: '09:30', unread: 3 },
-  { id: 7, lastMessage: 'Sudah selesai', time: '08:15', unread: 0 },
-])
+//const chats = ref([
+//  { id: 1, lastMessage: 'Oke, jam 3 ya?', time: '14:30', unread: 2 },
+//  { id: 2, lastMessage: 'Haha iya betul!', time: '13:15', unread: 0 },
+//  { id: 3, lastMessage: 'File sudah dikirim', time: '12:45', unread: 5 },
+//  { id: 4, lastMessage: 'Bisa bantu revisi?', time: '11:20', unread: 1 },
+//  { id: 5, lastMessage: 'Oke, nanti aku kabari', time: '10:05', unread: 0 },
+//  { id: 6, lastMessage: 'Meeting jam 4?', time: '09:30', unread: 3 },
+//  { id: 7, lastMessage: 'Sudah selesai', time: '08:15', unread: 0 },
+//])
 
 // === SEARCH ===
 const searchQuery = ref('')
@@ -57,6 +59,11 @@ const filteredUsers = computed(() => {
   return users.value.filter(u =>
     u.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
+})
+
+const chats = computed(() => {
+  const result = conversationStore.conversations;
+  if(result) return result;
 })
 
 // Ke halaman chat
@@ -100,6 +107,12 @@ watch(() => socketStore.onlineUsers, (onlineUsers) => {
 
 onMounted(() => {
   fetchUsers();
+  conversationStore.fetchConversations();
+  conversationStore.handleConversations();
+});
+
+onUnmounted(() => {
+  socketStore.socket?.off('conversations-history')
 })
 
 </script>
@@ -187,15 +200,16 @@ onMounted(() => {
       <div class="divide-y">
         <div
           v-for="chat in chats"
-          :key="chat.id"
-          @click="openChat(chat.id)"
+          :key="chat._id"
+          @click="openChat(chat.participants._id)"
           class="flex items-center gap-3 p-4 hover:bg-gray-100 cursor-pointer transition-colors"
         >
           <!-- Avatar dari users -->
           <div class="relative">
             <Avatar>
-              <!-- <AvatarImage :src="users.find(u => u.id === chat.id)?.avatar" /> -->
-              <AvatarFallback>{{ users.find(u => u.id === chat.id)?.name[0] }}</AvatarFallback>
+              <AvatarImage :src="chat.participants.profileImageUrl" />
+              <!-- <AvatarImage :src="chat.participants[0].profileImageUrl" /> -->
+              <!-- <AvatarFallback>{{ users.find(u => u.id === chat.id)?.name[0] }}</AvatarFallback> -->
             </Avatar>
             <div
               :class="[
@@ -210,7 +224,7 @@ onMounted(() => {
               <p class="font-medium text-sm truncate">
                 {{ users.find(u => u.id === chat.id)?.name }}
               </p>
-              <p class="text-sm text-gray-600 truncate">{{ chat.lastMessage }}</p>
+              <p class="text-sm text-gray-600 truncate">{{ chat.lastMessage?.message }}</p>
             </div>
           </div>
 

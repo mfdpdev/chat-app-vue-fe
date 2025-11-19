@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { io } from 'socket.io-client';
 import { useAuthStore } from './auth';
+import { useConversationStore } from './conversation';
 
 export const useSocketStore = defineStore("store", () => {
   const socket: any = ref(null);
