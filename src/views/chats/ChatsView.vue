@@ -116,7 +116,8 @@ onMounted(() => {
               <div class="relative cursor-pointer">
                 <Avatar class="h-14 w-14 ring-2 ring-transparent group-hover:ring-blue-500 transition-all">
                   <!-- <AvatarImage src="" /> -->
-                  <AvatarFallback>Test</AvatarFallback>
+                  <AvatarImage :src="authStore.me.profileImageUrl || 'http://localhost:8000/images/default-profile.jpeg'" alt="John Doe" />
+                  <AvatarFallback></AvatarFallback>
                 </Avatar>
               </div>
             </div>

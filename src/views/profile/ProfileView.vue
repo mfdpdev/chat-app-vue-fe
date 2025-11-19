@@ -11,34 +11,31 @@
     </header>
 
     <!-- Main Content -->
-    <main class="grow px-4 py-3 flex flex-col space-y-6">
-      <!-- <div class="space-y-6 flex flex-col bg-red-200"> -->
-
+    <form class="grow" @submit.prevent="handle">
+      <main class="h-full px-4 py-3 flex flex-col space-y-6">
         <!-- Profile Card -->
         <Card>
           <CardContent class="pt-8">
             <!-- Foto Profile + Nama -->
             <div class="flex flex-col items-center">
               <Avatar class="h-32 w-32 ring-4 ring-secondary ring-offset-4 ring-offset-background">
-                <AvatarImage src="/images/default-profile.jpeg" alt="John Doe" />
+                <AvatarImage :src="previewUrl || userStore.authStore.me.profileImageUrl || 'http://localhost:8000/images/default-profile.jpeg'" alt="John Doe" />
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
-              <h2 class="mt-4 text-2xl font-semibold">John Doe</h2>
+              <h2 class="mt-4 text-2xl font-semibold">{{ userStore.authStore.me?.name }}</h2>
             </div>
 
             <!-- Form Fields -->
             <div class="mt-8 space-y-6">
               <div class="space-y-2">
                 <Label>Profile Picture</Label>
-                <Input type="file" accept="image/*" disabled class="cursor-not-allowed" />
+                <Input id="profileImageInput" type="file" accept="image/*" class="" @change="onFileChange" />
               </div>
 
               <div class="space-y-2">
                 <Label>Your Name</Label>
-                <Input value="John Doe" placeholder="Type your name..." disabled />
+                <Input v-model="form.name" type="text" placeholder="Type your name..." />
               </div>
-
-              <Button class="w-full" >Update Profile</Button>
             </div>
           </CardContent>
         </Card>
@@ -51,18 +48,18 @@
           <CardContent class="space-y-6">
             <div class="space-y-2">
               <Label>New Password</Label>
-                <Input type="password" placeholder="••••••••" disabled />
+                <Input v-model="form.password" type="password" placeholder="••••••••" />
               </div>
               <div class="space-y-2">
                 <Label>Confirm New Password</Label>
-                <Input type="password" placeholder="••••••••" disabled />
+                <Input v-model="form.password_confirmation" type="password" placeholder="••••••••" />
               </div>
-              <Button class="w-full" >Update Password</Button>
             </CardContent>
           </Card>
 
-        <!-- </div> -->
-      </main>
+          <Button class="w-full" >Update Profile</Button>
+        </main>
+      </form>
     </div>
 </template>
 
@@ -76,6 +73,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ChevronLeft } from "lucide-vue-next"
+import { useUserStore } from "@/stores/user"
+import { ref, reactive } from "vue"
 
 // Fungsi kembali (bisa diganti dengan router kalau pakai Vue Router)
 const goBack = () => {
@@ -83,5 +82,69 @@ const goBack = () => {
   // atau kalau pakai Vue Router:
   // router.back()
   // atau router.push('/home')
+}
+
+const userStore = useUserStore();
+
+const form = reactive({
+  name: userStore.authStore.me.name ?? "",
+  password: "",
+  password_confirmation: "",
+})
+
+const validatePassword = () => {
+  //passwordErrors.value = ''
+
+  // Jika salah satu diisi, tapi tidak sama
+  if (form.password && form.password !== form.password_confirmation) {
+    //passwordErrors.value = 'Password dan konfirmasi password harus sama'
+    return false
+  }
+  return true
+}
+
+const selectedFile = ref<File | null>(null)
+const previewUrl = ref<string | null>(null)
+
+const onFileChange = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (input.files?.[0]) {
+    const file = input.files[0]
+    selectedFile.value = file
+
+    // Buat preview
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      previewUrl.value = ev.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const handle = async () => {
+  if(!validatePassword()){
+    return;
+  }
+  
+  const payload = new FormData();
+
+  if(form.name && form.name !== userStore.authStore.me?.name) payload.append("name", form.name);
+  if(form.password && form.password !== "") payload.append("password", form.password);
+
+  if (selectedFile.value) {
+    payload.append('profileImage', selectedFile.value)
+  }
+
+  await userStore.update(payload);
+
+  const fileInput = document.getElementById('profileImageInput') as HTMLInputElement
+  if (fileInput) fileInput.value = ''   // ini yang bikin input kosong
+
+  // Reset state biar bersih
+  selectedFile.value = null
+  previewUrl.value = null
+
+  form.password = "";
+  form.password_confirmation = "";
 }
 </script>
