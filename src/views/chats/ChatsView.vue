@@ -55,15 +55,34 @@ const users = ref([
 // === SEARCH ===
 const searchQuery = ref('')
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value
-  return users.value.filter(u =>
-    u.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+  //if (!searchQuery.value) return conversationStore.conversations;
+  return conversationStore.conversations.filter(conv => {
+    //const participantsName = conv.participants.map(p => p.name.toLowerCase()).join(" ");
+    return conv.participants.name.includes(searchQuery.value.toLowerCase());
+  });
+  //return users.value.filter(u =>
+  //  u.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  //)
 })
 
 const chats = computed(() => {
-  const result = conversationStore.conversations;
-  if(result) return result;
+  //const result = conversationStore.conversations;
+  //if(result) return result;
+  if (!searchQuery.value) return conversationStore.conversations;
+
+  // Saring percakapan berdasarkan nama peserta atau pesan terakhir
+  return conversationStore.conversations.filter(conv => {
+    // Cek jika ada nama peserta yang cocok dengan searchQuery
+    //const isParticipantMatch = conv.participants.some(participant => 
+    //  participant.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    //);
+
+    //// Cek jika pesan terakhir cocok dengan searchQuery
+    //const isLastMessageMatch = conv.messages[conv.messages.length - 1]?.text.toLowerCase().includes(searchQuery.value.toLowerCase());
+
+    //return isParticipantMatch || isLastMessageMatch;
+    return conv.participants.name.includes(searchQuery.value.toLowerCase()) || conv.lastMessage?.message.includes(searchQuery.value.toLowerCase());
+  });
 })
 
 // Ke halaman chat
@@ -222,7 +241,7 @@ onUnmounted(() => {
           <div class="flex-1 min-w-0">
             <div class="flex flex-col justify-center">
               <p class="font-medium text-sm truncate">
-                {{ users.find(u => u.id === chat.id)?.name }}
+                {{ chat.participants.name }}
               </p>
               <p class="text-sm text-gray-600 truncate">{{ chat.lastMessage?.message }}</p>
             </div>
